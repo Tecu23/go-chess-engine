@@ -2,5 +2,7 @@ package main
 
 func main() {
 	tell("info string hello Engine")
-	uci(input(), mainTell)
+	uci(input())
+
+	tell("info string quits program")
 }
