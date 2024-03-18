@@ -69,6 +69,8 @@ func uci(input chan string) {
 			board.Print()
 		case "pbb":
 			board.printAllBB()
+		case "pm":
+			board.printAllMvs()
 		default:
 			tell("info string unknown cmd ", cmd)
 		}

@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-func init() {
-	initFenSq2Int()
-}
-
 const (
 	nP12     = 12
 	nP       = 6
@@ -68,7 +64,12 @@ func (b *boardStruct) move(fr, to, pr int) {
 }
 
 func (b *boardStruct) setSq(p12, s int) {
+	if b.sq[s] != empty {
+		b.count[b.sq[s]]--
+	}
+
 	b.sq[s] = p12
+
 	if p12 == empty {
 		b.wbBB[WHITE].clr(uint(s))
 		b.wbBB[BLACK].clr(uint(s))
@@ -77,6 +78,8 @@ func (b *boardStruct) setSq(p12, s int) {
 		}
 		return
 	}
+
+	b.count[p12]++
 
 	p := piece(p12)
 	sd := p12Color(p12)
@@ -95,11 +98,68 @@ func (b *boardStruct) newGame() {
 	parseFEN(startpos)
 }
 
-func (b *boardStruct) genRookMoves() {
-	sd := b.stm
-	frBB := b.pieceBB[Rook] & b.wbBB[sd]
-	p12 := pc2P12(Rook, sd)
-	b.genFrMoves(p12, frBB, &ml)
+func (b *boardStruct) genRookMoves(ml *moveList, sd color) {
+	allRBB := b.pieceBB[Rook] & b.wbBB[sd]
+	p12 := uint(pc2P12(Rook, color(sd)))
+	ep := uint(b.ep)
+	castl := uint(b.castlings)
+	var mv move
+	for fr := allRBB.firstOne(); fr != 64; fr = allRBB.firstOne() {
+		rk := fr / 8
+		fl := fr % 8
+		// N
+		for r := rk + 1; r < 8; r++ {
+			to := uint(r*8 + fl)
+			cp := uint(b.sq[to])
+			if cp != empty && p12Color(int(cp)) == sd {
+				break
+			}
+			mv.packMove(uint(fr), to, p12, cp, empty, ep, castl)
+			ml.add(mv)
+			if cp != empty {
+				break
+			}
+		}
+		// S
+		for r := rk - 1; r >= 0; r-- {
+			to := uint(r*8 + fl)
+			cp := uint(b.sq[to])
+			if cp != empty && p12Color(int(cp)) == sd {
+				break
+			}
+			mv.packMove(uint(fr), to, p12, cp, empty, ep, castl)
+			ml.add(mv)
+			if cp != empty {
+				break
+			}
+		}
+		// E
+		for f := fl + 1; f < 8; f++ {
+			to := uint(rk*8 + f)
+			cp := uint(b.sq[to])
+			if cp != empty && p12Color(int(cp)) == sd {
+				break
+			}
+			mv.packMove(uint(fr), to, p12, cp, empty, ep, castl)
+			ml.add(mv)
+			if cp != empty {
+				break
+			}
+		}
+		// W
+		for f := fl - 1; f >= 0; f-- {
+			to := uint(rk*8 + f)
+			cp := uint(b.sq[to])
+			if cp != empty && p12Color(int(cp)) == sd {
+				break
+			}
+			mv.packMove(uint(fr), to, p12, cp, empty, ep, castl)
+			ml.add(mv)
+			if cp != empty {
+				break
+			}
+		}
+	}
 }
 
 func (b *boardStruct) genFrMoves(p12 int, frBB bitBoard, ml *moveList) {
@@ -107,6 +167,18 @@ func (b *boardStruct) genFrMoves(p12 int, frBB bitBoard, ml *moveList) {
 }
 
 // ////////////////////////////////// my own commands - NOT UCI /////////////////////////////////////
+func (b *boardStruct) printAllMvs() {
+	fmt.Println("magic")
+	// var ml moveList
+	// board.genRookMovesM(&ml)
+	// fmt.Println(ml.String())
+
+	var ml1 moveList
+	fmt.Println("simple")
+	board.genRookMoves(&ml1, b.stm)
+	fmt.Println(ml1.String())
+}
+
 func (b *boardStruct) Print() {
 	txtStm := "BLACK"
 	if b.stm == WHITE {
@@ -299,7 +371,7 @@ func parseMvs(mvstr string) {
 		}
 
 		// is the prom piece ok?
-		pr := 0
+		pr := empty
 		if len(mv) == 5 { // prom
 			if !strings.ContainsAny(mv[4:5], "qrbn") {
 				tell(
