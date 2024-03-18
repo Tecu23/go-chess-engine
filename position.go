@@ -63,6 +63,10 @@ func (b *boardStruct) clear() {
 	}
 }
 
+func (b *boardStruct) move(fr, to, pr int) {
+	// TODO 1. move in board
+}
+
 func (b *boardStruct) setSq(p12, s int) {
 	b.sq[s] = p12
 	if p12 == empty {
@@ -89,6 +93,92 @@ func (b *boardStruct) newGame() {
 	b.stm = WHITE
 	b.clear()
 	parseFEN(startpos)
+}
+
+func (b *boardStruct) genRookMoves() {
+	sd := b.stm
+	frBB := b.pieceBB[Rook] & b.wbBB[sd]
+	p12 := pc2P12(Rook, sd)
+	b.genFrMoves(p12, frBB, &ml)
+}
+
+func (b *boardStruct) genFrMoves(p12 int, frBB bitBoard, ml *moveList) {
+	// TODO finish genRookMoves
+}
+
+// ////////////////////////////////// my own commands - NOT UCI /////////////////////////////////////
+func (b *boardStruct) Print() {
+	txtStm := "BLACK"
+	if b.stm == WHITE {
+		txtStm = "WHITE"
+	}
+	txtEp := "-"
+	if b.ep != 0 {
+		txtEp = sq2Fen[b.ep]
+	}
+
+	fmt.Printf("%v to move; ep: %v  castling:%v\n", txtStm, txtEp, b.castlings.String())
+
+	fmt.Println("  +------+------+------+------+------+------+------+------+")
+	for lines := 8; lines > 0; lines-- {
+		fmt.Println("  |      |      |      |      |      |      |      |      |")
+		fmt.Printf("%v |", lines)
+		for ix := (lines - 1) * 8; ix < lines*8; ix++ {
+			if b.sq[ix] == bP {
+				fmt.Printf("   o  |")
+			} else {
+				fmt.Printf("   %v  |", int2Fen(b.sq[ix]))
+			}
+		}
+		fmt.Println()
+		fmt.Println("  |      |      |      |      |      |      |      |      |")
+		fmt.Println("  +------+------+------+------+------+------+------+------+")
+	}
+
+	fmt.Printf("       A      B      C      D      E      F      G      H\n")
+}
+
+func (b *boardStruct) printAllBB() {
+	txtStm := "BLACK"
+	if b.stm == WHITE {
+		txtStm = "WHITE"
+	}
+	txtEp := "-"
+	if b.ep != 0 {
+		txtEp = sq2Fen[b.ep]
+	}
+	fmt.Printf("%v to move; ep: %v   castling:%v\n", txtStm, txtEp, b.castlings.String())
+
+	fmt.Println("white pieces")
+	fmt.Println(b.wbBB[WHITE].Stringln())
+	fmt.Println("black pieces")
+	fmt.Println(b.wbBB[BLACK].Stringln())
+
+	fmt.Println("wP")
+	fmt.Println((b.pieceBB[Pawn] & b.wbBB[WHITE]).Stringln())
+	fmt.Println("wN")
+	fmt.Println((b.pieceBB[Knight] & b.wbBB[WHITE]).Stringln())
+	fmt.Println("wB")
+	fmt.Println((b.pieceBB[Bishop] & b.wbBB[WHITE]).Stringln())
+	fmt.Println("wR")
+	fmt.Println((b.pieceBB[Rook] & b.wbBB[WHITE]).Stringln())
+	fmt.Println("wQ")
+	fmt.Println((b.pieceBB[Queen] & b.wbBB[WHITE]).Stringln())
+	fmt.Println("wK")
+	fmt.Println((b.pieceBB[King] & b.wbBB[WHITE]).Stringln())
+
+	fmt.Println("bP")
+	fmt.Println((b.pieceBB[Pawn] & b.wbBB[BLACK]).Stringln())
+	fmt.Println("bN")
+	fmt.Println((b.pieceBB[Knight] & b.wbBB[BLACK]).Stringln())
+	fmt.Println("bB")
+	fmt.Println((b.pieceBB[Bishop] & b.wbBB[BLACK]).Stringln())
+	fmt.Println("bR")
+	fmt.Println((b.pieceBB[Rook] & b.wbBB[BLACK]).Stringln())
+	fmt.Println("bQ")
+	fmt.Println((b.pieceBB[Queen] & b.wbBB[BLACK]).Stringln())
+	fmt.Println("bK")
+	fmt.Println((b.pieceBB[King] & b.wbBB[BLACK]).Stringln())
 }
 
 // parse a FEN string and setup the position
@@ -173,10 +263,56 @@ func parse50(fen50 string) int {
 
 // parse and make the moves in position command from GUI
 func parseMvs(mvstr string) {
-	mvs := strings.Split(mvstr, " ")
+	mvs := strings.Fields(low(mvstr))
 
 	for _, mv := range mvs {
-		fmt.Println("make move", mv)
+		mv = trim(mv)
+		if len(mv) < 4 {
+			tell("info string ", mv, " in position command is not a correct move")
+			return
+		}
+
+		// is fr square ok?
+		fr, ok := fenSq2Int[mv[:2]]
+		if !ok {
+			tell("info string ", mv, " in the position command is not a correct fr square")
+			return
+		}
+
+		p12 := board.sq[fr]
+		if p12 == empty {
+			tell("info string ", mv, " in the position command. fr_sq is an empty square")
+			return
+		}
+
+		pCol := p12Color(p12)
+		if pCol != board.stm {
+			tell("info string ", mv, " in the position command. fr piece has the wrong color")
+			return
+		}
+
+		// is to square ok?
+		to, ok := fenSq2Int[mv[2:4]]
+		if !ok {
+			tell("info string ", mv, " in the position has an incorrect to square")
+			return
+		}
+
+		// is the prom piece ok?
+		pr := 0
+		if len(mv) == 5 { // prom
+			if !strings.ContainsAny(mv[4:5], "qrbn") {
+				tell(
+					"info string promotion piece in ",
+					mv,
+					" in the position command is not correct",
+				)
+				return
+			}
+			pr = fen2Int(mv[4:5])
+			pr = pc2P12(pr, board.stm)
+		}
+		board.move(fr, to, pr)
 	}
 }
 
@@ -206,6 +342,11 @@ func piece(p12 int) int {
 // p12Color returns the color of a p12 form
 func p12Color(p12 int) color {
 	return color(p12 & 0x1)
+}
+
+// pc2P12 returns p12 from pc and sd
+func pc2P12(pc int, sd color) int {
+	return (pc << 1) | int(sd)
 }
 
 // map fen-sq to int

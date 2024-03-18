@@ -65,6 +65,10 @@ func uci(input chan string) {
 			handleQuit(toEng)
 			quit = true
 			continue
+		case "pb":
+			board.Print()
+		case "pbb":
+			board.printAllBB()
 		default:
 			tell("info string unknown cmd ", cmd)
 		}

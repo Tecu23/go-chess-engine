@@ -1,8 +1,8 @@
 package main
 
 func main() {
-	tell("info string Hello GoBit")
+	tell("info string starting GoBit")
 	uci(input())
 
-	tell("info string quits program")
+	tell("info string quits GOBIT")
 }
