@@ -5,7 +5,7 @@ import (
 )
 
 func Test_sMagic_atks(t *testing.T) {
-	initFenSq2Int()
+	initFen2Sq()
 	initMagic()
 	handleNewgame()
 	tests := []struct {
@@ -22,17 +22,18 @@ func Test_sMagic_atks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handlePosition("position " + tt.position)
-			if got := tt.m.atks(&board); got != tt.want {
+			if got := tt.m.atks(board.allBB()); got != tt.want {
 				t.Errorf("sMagic.atks() = \n%v\nwant \n%v", got.Stringln(), tt.want.Stringln())
 			}
 		})
 	}
 }
 
-func createBitBoard(bits ...uint) bitBoard {
+func createBitBoard(bits ...int) bitBoard {
 	BB := bitBoard(0)
 	for _, b := range bits {
 		BB.set(b)
 	}
 	return BB
 }
+

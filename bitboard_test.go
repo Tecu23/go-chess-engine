@@ -8,7 +8,7 @@ func Test_bitBoard_some(t *testing.T) {
 	tests := []struct {
 		name string
 		b    bitBoard
-		pos  uint
+		pos  int
 	}{
 		{"", 0xF, 63},
 		{"", 0x0, 0},
@@ -71,3 +71,4 @@ func Test_bitBoard_lasttOne(t *testing.T) {
 		})
 	}
 }
+

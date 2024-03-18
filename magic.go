@@ -15,15 +15,15 @@ var (
 )
 
 // all attacks from current square
-func (m *sMagic) atks(b *boardStruct) bitBoard {
-	return m.toSqBB[int(((b.allBB()&m.innerBB)*bitBoard(m.magic))>>m.shift)]
+func (m *sMagic) atks(allBB bitBoard) bitBoard {
+	return m.toSqBB[int(((allBB&m.innerBB)*bitBoard(m.magic))>>m.shift)]
 }
 
 func initMagic() {
 	fmt.Println("starting init() for magic.go")
 
 	// bishops
-	fillOptimalMagicsB()
+	// fillOptimalMagicsB()
 	for sq := A1; sq <= H8; sq++ {
 		mBishopTab[sq].shift = uint(64 - nBBits[sq])
 		mBishopTab[sq].innerBB = bitBoard(innerBAtks(sq))
@@ -39,11 +39,8 @@ func initMagic() {
 		mRookTab[sq].magic = magicR[sq]
 	}
 
-	fmt.Println("BISHOPS")
-	prepareMagicB()
-
-	fmt.Println("ROOKS")
-	prepareMagicR()
+	prepareMagicB() // Bishops
+	prepareMagicR() // Rooks
 }
 
 // var toSqBB *[]bitBoard // pointer to mRookTab[sq].toSqBB or mBishopTab[sq].toSqBB
@@ -103,7 +100,7 @@ func bitCombs(
 		}
 		toBB := bitBoard(computeAtks(fr, dirs, uint64(wBits)))
 
-		if (*toSqBB)[int(m)] != 0x0 && (*toSqBB)[int(m)] != toBB && fr == F8 { // for bishop
+		if (*toSqBB)[int(m)] != 0x0 && (*toSqBB)[int(m)] != toBB { // for bishop
 			fmt.Println(
 				"we have problem",
 				sq2Fen[fr],
@@ -123,13 +120,13 @@ func bitCombs(
 	// 1
 	//
 	//						wBits |= (uint64(1) << uint(currSq))
-	wBits.set(uint(currSq))
+	wBits.set(currSq)
 	cnt += bitCombs(wBits, fr, currSq, currIx, maxM, mTabEntry, dirs)
 
 	// 0
 	//
 	//						wBits &= ^(uint64(1) << uint(currSq))
-	wBits.clr(uint(currSq))
+	wBits.clr(currSq)
 	cnt += bitCombs(wBits, fr, currSq, currIx, maxM, mTabEntry, dirs)
 
 	return cnt
@@ -265,7 +262,6 @@ func innerBAtks(sq int) uint64 {
 		r--
 		f++
 	}
-
 	return atkBB
 }
 
@@ -587,3 +583,4 @@ func findDuplicates(toBBTab []bitBoard, fr int, magic uint64) int {
 	return cntDup
 }
 */
+

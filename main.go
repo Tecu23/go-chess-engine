@@ -1,13 +1,25 @@
 package main
 
+import (
+	"strings"
+)
+
 func main() {
-	tell("info string starting GoBit")
+	tell("info string Starting GoBit")
+
 	uci(input())
 
 	tell("info string quits GOBIT")
 }
 
 func init() {
-	initFenSq2Int()
+	initFen2Sq()
 	initMagic()
+	initKeys()
+	initAtksKings()
+	initAtksKnights()
+	initCastlings()
+	pcSqInit()
+	board.newGame()
+	handleSetOption(strings.Split("setoption name hash value 32", " "))
 }
