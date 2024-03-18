@@ -17,7 +17,7 @@ func (b *bitBoard) set(pos uint) {
 }
 
 func (b bitBoard) test(pos uint) bool {
-	return (b * bitBoard(uint64(1)<<pos)) != 0
+	return (b & bitBoard(uint64(1)<<pos)) != 0
 }
 
 func (b *bitBoard) clr(pos uint) {

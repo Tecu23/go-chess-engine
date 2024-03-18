@@ -188,6 +188,8 @@ func handleGo(words []string) {
 			tell("info string go mate not implemented")
 		case "infinite":
 			tell("info string go infinite not implemented")
+		case "register":
+			tell("info string go register not implemented")
 		default:
 			tell("info string go ", words[1], " not implemented")
 		}
